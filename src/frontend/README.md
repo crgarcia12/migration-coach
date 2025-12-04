@@ -73,12 +73,45 @@ Each slide includes key points, potential objections, talking points, and red fl
 # Install dependencies
 npm install
 
+# Configure Azure OpenAI (optional but recommended)
+cp .env.example .env
+# Edit .env and add your Azure OpenAI credentials
+
 # Run development server
 npm run dev
 
 # Build for production
 npm run build
 ```
+
+## Azure AI Foundry Setup
+
+The app uses **Azure OpenAI** for intelligent coaching responses. To enable AI-powered coaching:
+
+### 1. Create Azure OpenAI Resource
+- Go to [Azure Portal](https://portal.azure.com)
+- Create an "Azure OpenAI" resource
+- Deploy a model (GPT-4 recommended, GPT-3.5-turbo also works)
+
+### 2. Get Your Credentials
+- Navigate to your Azure OpenAI resource
+- Go to "Keys and Endpoint"
+- Copy the **Endpoint** and **Key 1**
+- Note your **Deployment name** from the "Model deployments" section
+
+### 3. Configure the App
+Create a `.env` file in the `src/frontend` directory:
+
+```env
+VITE_AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+VITE_AZURE_OPENAI_API_KEY=your-api-key-here
+VITE_AZURE_OPENAI_DEPLOYMENT=gpt-4
+```
+
+### 4. Restart the Dev Server
+The app will automatically use Azure AI for coaching if configured.
+
+**Note**: If Azure OpenAI is not configured, the app falls back to rule-based coaching (still functional but less intelligent).
 
 ## User Flow
 

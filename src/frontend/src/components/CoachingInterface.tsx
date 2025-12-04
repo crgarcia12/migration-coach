@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { CustomerContext, Message } from '../types';
 import { SAMPLE_SLIDES } from '../data/slides';
-import { generateCoachResponse } from '../utils/coachingEngine';
+import { generateAICoachResponse } from '../utils/azureAICoach';
 
 interface Props {
   customerContext: CustomerContext;
@@ -49,24 +49,37 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext }) => {
     setIsTyping(true);
 
     // Simulate coach thinking and responding
-    setTimeout(() => {
-      const coachResponse = generateCoachResponse(
-        inputValue,
-        currentSlide,
-        customerContext,
-        messages
-      );
-      
-      const coachMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'coach',
-        content: coachResponse.content,
-        timestamp: new Date(),
-        sentiment: coachResponse.sentiment
-      };
+    setTimeout(async () => {
+      try {
+        const coachResponse = await generateAICoachResponse(
+          inputValue,
+          currentSlide,
+          customerContext,
+          messages
+        );
+        
+        const coachMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'coach',
+          content: coachResponse.content,
+          timestamp: new Date(),
+          sentiment: coachResponse.sentiment
+        };
 
-      setMessages(prev => [...prev, coachMessage]);
-      setIsTyping(false);
+        setMessages(prev => [...prev, coachMessage]);
+      } catch (error) {
+        console.error('Error getting coach response:', error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'coach',
+          content: "Let's refocus. Tell me more about how you'd address this slide.",
+          timestamp: new Date(),
+          sentiment: 'neutral'
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsTyping(false);
+      }
     }, 1000 + Math.random() * 1000);
   };
 
