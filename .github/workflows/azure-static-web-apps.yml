@@ -33,15 +33,17 @@ jobs:
         run: |
           cd src/frontend
           npm run build
-          echo "Build completed. Checking dist folder..."
-          ls -la dist/
-          echo "Checking for index.html..."
-          test -f dist/index.html || { echo "ERROR: dist/index.html not found!"; exit 1; }
-          echo "Checking for staticwebapp.config.json..."
-          test -f dist/staticwebapp.config.json || { echo "ERROR: dist/staticwebapp.config.json not found!"; exit 1; }
         env:
-          # No Azure credentials in build - users configure in browser
           NODE_ENV: production
+
+      - name: Verify Build Output
+        run: |
+          echo "=== Checking build output ==="
+          ls -la src/frontend/dist/
+          echo "=== Verifying required files ==="
+          test -f src/frontend/dist/index.html || { echo "ERROR: index.html not found!"; exit 1; }
+          test -f src/frontend/dist/staticwebapp.config.json || { echo "ERROR: staticwebapp.config.json not found!"; exit 1; }
+          echo "=== Build output verification complete ==="
 
       - name: Deploy to Azure Static Web Apps
         id: deploy
@@ -50,8 +52,8 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "src/frontend"
-          output_location: "dist"
+          app_location: "src/frontend/dist"
+          output_location: ""
           skip_app_build: true
 
   close_pull_request_job:
