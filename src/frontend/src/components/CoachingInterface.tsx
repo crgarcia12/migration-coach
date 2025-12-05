@@ -16,7 +16,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset, o
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'keypoints' | 'objections' | 'redflags' | 'flow'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'keypoints' | 'objections' | 'redflags' | 'flow' | 'context'>('chat');
   const [slideWidth, setSlideWidth] = useState(50); // percentage
   const [isResizing, setIsResizing] = useState(false);
   const [slideContents, setSlideContents] = useState<SlideContent[]>([]);
@@ -400,10 +400,11 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset, o
         <div className="flex flex-col bg-white" style={{ width: `${100 - slideWidth}%` }}>
           {/* Tabs */}
           <div className="border-b border-gray-200 bg-gray-50">
-            <div className="flex">
+            <div className="flex overflow-x-auto">
               {[
                 { id: 'chat' as const, label: 'Coach Chat', icon: '💬' },
                 { id: 'flow' as const, label: 'Presentation Flow', icon: '📊' },
+                { id: 'context' as const, label: 'Customer Context', icon: '👤' },
                 { id: 'keypoints' as const, label: 'Key Points', icon: '🎯' },
                 { id: 'objections' as const, label: 'Objections', icon: '⚠️' },
                 { id: 'redflags' as const, label: 'Red Flags', icon: '🚫' }
@@ -493,6 +494,77 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset, o
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'context' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Customer Discovery Summary</h3>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">🎯 Urgency</h4>
+                    <p className="text-gray-700 capitalize">{customerContext.urgency}</p>
+                    {customerContext.timeline && (
+                      <p className="text-sm text-gray-600 mt-1">Timeline: {customerContext.timeline}</p>
+                    )}
+                  </div>
+
+                  <div className="p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">🚀 Modernization Appetite</h4>
+                    <p className="text-gray-700 capitalize">{customerContext.modernizationAppetite}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {customerContext.modernizationAppetite === 'conservative' 
+                        ? 'Prefers minimal changes, focuses on lift-and-shift'
+                        : customerContext.modernizationAppetite === 'balanced'
+                        ? 'Open to some modernization during migration'
+                        : 'Ready for significant modernization and cloud-native transformation'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">👥 Audience Type</h4>
+                    <p className="text-gray-700 capitalize">{customerContext.audienceType}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {customerContext.audienceType === 'technical'
+                        ? 'Focus on architecture, APIs, and technical details'
+                        : customerContext.audienceType === 'business'
+                        ? 'Emphasize ROI, business value, and risk mitigation'
+                        : 'Balance technical and business perspectives'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">💰 Budget Sensitivity</h4>
+                    <p className="text-gray-700 capitalize">{customerContext.budgetSensitivity}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {customerContext.budgetSensitivity === 'high'
+                        ? 'Very cost-conscious, needs clear ROI justification'
+                        : customerContext.budgetSensitivity === 'medium'
+                        ? 'Balanced view on costs vs. benefits'
+                        : 'Focused more on capabilities than cost'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">⚠️ Pain Points</h4>
+                    <ul className="space-y-2">
+                      {customerContext.painPoints.map((point, index) => (
+                        <li key={index} className="flex items-start gap-2 text-gray-700">
+                          <span className="text-red-600 font-bold">•</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    <strong>💡 Coaching Tip:</strong> Keep this context in mind throughout your presentation. 
+                    Every point you make should tie back to their specific pain points and priorities.
+                  </p>
                 </div>
               </div>
             )}
