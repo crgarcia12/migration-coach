@@ -2,37 +2,88 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { CustomerContext, Message } from '../types';
 import { SAMPLE_SLIDES } from '../data/slides';
 import { generateAICoachResponse } from '../utils/azureAICoach';
+import { extractTextFromAllSlides, formatOCRForPrompt, type SlideContent } from '../utils/slideOCR';
 
 interface Props {
   customerContext: CustomerContext;
+  onReset?: () => void;
 }
 
-export const CoachingInterface: React.FC<Props> = ({ customerContext }) => {
+export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'keypoints' | 'objections' | 'redflags'>('chat');
+  const [slideWidth, setSlideWidth] = useState(50); // percentage
+  const [isResizing, setIsResizing] = useState(false);
+  const [slideContents, setSlideContents] = useState<SlideContent[]>([]);
+  const [isLoadingOCR, setIsLoadingOCR] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentSlide = SAMPLE_SLIDES[currentSlideIndex];
 
+  // Extract OCR content from all slides on mount
   useEffect(() => {
-    // Welcome message when component mounts
-    const welcomeMessage: Message = {
-      id: Date.now().toString(),
-      role: 'coach',
-      content: `Alright, let's get you ready for this presentation. I see you're dealing with a ${customerContext.audienceType} audience who's ${customerContext.urgency} about this migration. Let me be clear - I'm not here to coddle you. I'm here to make sure you don't fumble this opportunity.\n\nWe're starting with the ${currentSlide.title} slide. Tell me, what's your opening line going to be?`,
-      timestamp: new Date(),
-      sentiment: 'challenging'
+    const loadSlideContent = async () => {
+      setIsLoadingOCR(true);
+      try {
+        const contents = await extractTextFromAllSlides(SAMPLE_SLIDES);
+        setSlideContents(contents);
+        console.log('Slide OCR content loaded:', contents);
+      } catch (error) {
+        console.error('Failed to extract slide content:', error);
+      } finally {
+        setIsLoadingOCR(false);
+      }
     };
-    setMessages([welcomeMessage]);
+    
+    loadSlideContent();
   }, []);
+
+  useEffect(() => {
+    // Welcome message when OCR loading completes
+    if (!isLoadingOCR && slideContents.length > 0) {
+      const welcomeMessage: Message = {
+        id: Date.now().toString(),
+        role: 'coach',
+        content: `Alright, let's get you ready for this presentation. I see you're dealing with a ${customerContext.audienceType} audience who's ${customerContext.urgency} about this migration. Let me be clear - I'm not here to coddle you. I'm here to make sure you don't fumble this opportunity.\n\nWe're starting with the ${currentSlide.title} slide. Tell me, what's your opening line going to be?`,
+        timestamp: new Date(),
+        sentiment: 'challenging'
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [isLoadingOCR, slideContents]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Handle mouse dragging for resize
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = (e.clientX / window.innerWidth) * 100;
+      if (newWidth > 20 && newWidth < 80) {
+        setSlideWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
@@ -51,11 +102,13 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext }) => {
     // Simulate coach thinking and responding
     setTimeout(async () => {
       try {
-        const coachResponse = await generateAICoachResponse(
-          inputValue,
-          currentSlide,
-          customerContext,
-          messages
+        const { content, sentiment } = await generateAICoachResponse(
+          inputValue, 
+          currentSlide, 
+          customerContext, 
+          messages,
+          slideContents,
+          currentSlideIndex
         );
         
         const coachMessage: Message = {
@@ -135,6 +188,18 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext }) => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
+      {/* Loading OCR Overlay */}
+      {isLoadingOCR && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Analyzing Presentation Slides</h2>
+            <p className="text-gray-600">Extracting content from slides using Azure AI Vision OCR...</p>
+            <p className="text-sm text-gray-500 mt-2">This will be cached for future sessions</p>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div>
@@ -143,15 +208,25 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext }) => {
             Customer: {customerContext.audienceType} · {customerContext.urgency} · {customerContext.modernizationAppetite} modernization
           </p>
         </div>
-        <div className="text-sm text-gray-600">
-          Slide {currentSlideIndex + 1} of {SAMPLE_SLIDES.length}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Slide {currentSlideIndex + 1} of {SAMPLE_SLIDES.length}
+          </div>
+          {onReset && (
+            <button
+              onClick={onReset}
+              className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+            >
+              Start Over
+            </button>
+          )}
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Slide Viewer */}
-        <div className="w-1/2 bg-gray-900 flex flex-col">
+        <div className="bg-gray-900 flex flex-col" style={{ width: `${slideWidth}%` }}>
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="relative w-full max-w-3xl">
               <img 
@@ -210,8 +285,21 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext }) => {
           </div>
         </div>
 
+        {/* Resize Handle */}
+        <div
+          className="w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors relative group"
+          onMouseDown={() => setIsResizing(true)}
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-12 bg-gray-400 group-hover:bg-blue-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+            </svg>
+          </div>
+        </div>
+
         {/* Right Panel - Coaching */}
-        <div className="w-1/2 flex flex-col bg-white">
+        <div className="flex flex-col bg-white" style={{ width: `${100 - slideWidth}%` }}>
           {/* Tabs */}
           <div className="border-b border-gray-200 bg-gray-50">
             <div className="flex">

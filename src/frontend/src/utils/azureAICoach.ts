@@ -1,4 +1,6 @@
 import type { CustomerContext, Slide, Message } from '../types';
+import type { SlideContent } from './slideOCR';
+import { formatOCRForPrompt } from './slideOCR';
 
 interface AzureAIConfig {
   endpoint: string;
@@ -19,7 +21,9 @@ export const generateAICoachResponse = async (
   userResponse: string,
   currentSlide: Slide,
   customerContext: CustomerContext,
-  messageHistory: Message[]
+  messageHistory: Message[],
+  slideContents: SlideContent[] = [],
+  currentSlideIndex: number = 0
 ): Promise<{ content: string; sentiment: 'challenging' | 'supportive' | 'neutral' }> => {
   const config = getAzureAIConfig();
   
@@ -40,7 +44,7 @@ export const generateAICoachResponse = async (
   }));
 
   // Create the system prompt for the AI coach
-  const systemPrompt = `You are an elite sales coach training a seller to present a migration assessment to a customer. Your coaching style is ASSERTIVE and CHALLENGING - you push sellers to excellence and don't accept mediocre answers.
+  let systemPrompt = `You are an elite sales coach training a seller to present a migration assessment to a customer. Your coaching style is ASSERTIVE and CHALLENGING - you push sellers to excellence and don't accept mediocre answers.
 
 CUSTOMER CONTEXT:
 - Urgency: ${customerContext.urgency}
@@ -59,7 +63,14 @@ POTENTIAL OBJECTIONS:
 ${currentSlide.potentialObjections.map(p => `- ${p}`).join('\n')}
 
 RED FLAGS (what NOT to say):
-${currentSlide.redFlags.map(p => `- ${p}`).join('\n')}
+${currentSlide.redFlags.map(p => `- ${p}`).join('\n')}`;
+
+  // Add OCR extracted content if available
+  if (slideContents.length > 0) {
+    systemPrompt += `\n\n${formatOCRForPrompt(slideContents, currentSlideIndex)}`;
+  }
+
+  systemPrompt += `
 
 YOUR COACHING APPROACH:
 1. Be DIRECT and CHALLENGING - don't coddle the seller
