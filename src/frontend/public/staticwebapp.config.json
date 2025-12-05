@@ -24,6 +24,7 @@
   "mimeTypes": {
     ".json": "application/json",
     ".js": "text/javascript",
+    ".mjs": "text/javascript",
     ".css": "text/css",
     ".png": "image/png",
     ".jpg": "image/jpeg",
