@@ -1,8 +1,12 @@
-# Migration Coach 🚀
-
-An AI-powered sales coaching platform that helps sellers deliver compelling migration assessment presentations tailored to each customer's unique context.
-
-![Migration Coach Interface](readme-media/screenshot.png)
+<div align="center">
+  <img src="src/frontend/public/icon/logo.png" alt="Migration Coach Logo" width="200"/>
+  
+  # Migration Coach
+  
+  An AI-powered sales coaching platform that helps sellers deliver compelling migration assessment presentations tailored to each customer's unique context.
+  
+  ![Migration Coach Interface](readme-media/screenshot.png)
+</div>
 
 ## What is Migration Coach?
 
