@@ -238,16 +238,11 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <svg className="h-10 w-10" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="migrate-gradient" x1="9" y1="0" x2="9" y2="18" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#5EA0EF"/>
-                <stop offset="1" stopColor="#0078D4"/>
-              </linearGradient>
-            </defs>
-            <path d="M15.75 2.25H2.25C1.42157 2.25 0.75 2.92157 0.75 3.75V14.25C0.75 15.0784 1.42157 15.75 2.25 15.75H15.75C16.5784 15.75 17.25 15.0784 17.25 14.25V3.75C17.25 2.92157 16.5784 2.25 15.75 2.25Z" fill="url(#migrate-gradient)"/>
-            <path d="M6 6L9 9L6 12M10 12H13" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <img 
+            src="/icon/logo.png" 
+            alt="Azure Migrate"
+            className="h-10 w-10 object-contain"
+          />
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Migration Coach</h1>
             <p className="text-sm text-gray-600">
