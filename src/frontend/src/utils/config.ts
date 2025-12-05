@@ -10,13 +10,14 @@ export interface AzureConfig {
 
 const CONFIG_STORAGE_KEY = 'migration-coach-azure-config';
 
-// Get default configuration from environment variables
+// Get default configuration from environment variables (only for local development)
+// In production, these will be empty and users must configure via Settings page
 export const getDefaultConfig = (): AzureConfig => {
   return {
     openai: {
       endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT || '',
       apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY || '',
-      deploymentName: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-4',
+      deploymentName: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-5.1',
     },
   };
 };

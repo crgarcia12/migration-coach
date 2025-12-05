@@ -174,7 +174,7 @@ export const ConfigPage: React.FC<Props> = ({ onClose }) => {
                     type="text"
                     value={config.openai.deploymentName}
                     onChange={(e) => handleChange('deploymentName', e.target.value)}
-                    placeholder="gpt-4"
+                    placeholder="gpt-5.1"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>

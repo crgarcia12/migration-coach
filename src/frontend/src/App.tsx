@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { CustomerDiscovery } from './components/CustomerDiscovery';
 import { CoachingInterface } from './components/CoachingInterface';
 import { ConfigPage } from './components/ConfigPage';
+import { getConfig, isConfigValid } from './utils/config';
 import type { CustomerContext } from './types';
 
 const STORAGE_KEY = 'migration-coach-customer-context';
@@ -11,9 +12,17 @@ function App() {
   const [savedContext, setSavedContext] = useState<CustomerContext | null>(null);
   const [customerContext, setCustomerContext] = useState<CustomerContext | null>(null);
   const [showConfig, setShowConfig] = useState(false);
+  const [showConfigPrompt, setShowConfigPrompt] = useState(false);
 
-  // Check for saved context on mount
+  // Check for saved context and config on mount
   useEffect(() => {
+    // Check if configuration is valid
+    const config = getConfig();
+    if (!isConfigValid(config)) {
+      setShowConfigPrompt(true);
+      return;
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -48,6 +57,51 @@ function App() {
     localStorage.removeItem(STORAGE_KEY);
     setCustomerContext(null);
   };
+
+  // Show config prompt on first use
+  if (showConfigPrompt) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Migration Coach!</h2>
+            <p className="text-gray-600">Configuration Required</p>
+          </div>
+
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-gray-700 mb-3">
+              To use Migration Coach, you need to configure your Azure OpenAI credentials. 
+              These will be saved securely in your browser and never leave your device.
+            </p>
+            <p className="text-sm text-gray-700 font-medium">
+              You'll need:
+            </p>
+            <ul className="text-sm text-gray-600 mt-2 space-y-1">
+              <li>• Azure OpenAI endpoint</li>
+              <li>• Azure OpenAI API key</li>
+              <li>• Deployment name (e.g., gpt-5.1)</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowConfigPrompt(false);
+              setShowConfig(true);
+            }}
+            className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Configure Azure OpenAI
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Show config page
   if (showConfig) {

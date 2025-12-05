@@ -6,6 +6,12 @@
   An AI-powered sales coaching platform that helps sellers deliver compelling migration assessment presentations tailored to each customer's unique context.
   
   ![Migration Coach Interface](readme-media/screenshot.png)
+
+  ---
+  
+  🔒 **Security First**: No API keys are ever deployed. Users configure their own Azure credentials, stored only in their browser.
+  
+  ---
 </div>
 
 ## What is Migration Coach?
@@ -57,16 +63,26 @@ The coach provides:
 - **Tailwind CSS** for styling
 
 ### AI & Azure Services
-- **Azure OpenAI** (GPT-4) for coaching intelligence and slide text extraction (Vision API)
+- **Azure OpenAI** (GPT-5.1) for coaching intelligence and slide text extraction (Vision API)
 - Configurable through environment variables or in-app settings
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v18+)
-- Azure OpenAI access (with Vision-enabled model like GPT-4)
+- Node.js (v18+) - for local development
+- Azure OpenAI access (with Vision-enabled model like GPT-5.1)
 
-### Installation
+### Option 1: Use the Deployed Version
+
+Visit the deployed application at: **[Your Azure Static Web App URL]**
+
+On first visit, you'll be prompted to configure your Azure OpenAI credentials. These are:
+- 🔒 Stored only in your browser (localStorage)
+- 🚫 Never sent to any server or repository
+- ✅ Completely private and secure
+- 💾 Cached so you don't need to re-enter them
+
+### Option 2: Local Development
 
 1. Clone the repository:
 ```bash
@@ -79,19 +95,24 @@ cd migration-coach/src/frontend
 npm install
 ```
 
-3. Configure environment variables (Optional):
-Create a `.env` file in `src/frontend`:
+3. Configure environment variables (Optional for local dev):
+Create a `.env` file in `src/frontend` (see `.env.example`):
 ```env
-VITE_AZURE_OPENAI_ENDPOINT=https://zzzzzzzzzzzzzzz-resource.cognitiveservices.azure.com
-VITE_AZURE_OPENAI_API_KEY=
+VITE_AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+VITE_AZURE_OPENAI_API_KEY=your-api-key
 VITE_AZURE_OPENAI_DEPLOYMENT=gpt-5.1
 ```
 
-**Note**: You can also configure Azure settings through the in-app Settings page (⚙️ icon) after launching the application. The Settings page allows you to:
-- Set or override environment variables
-- View current configuration (from .env or custom)
-- Switch between environment defaults and custom settings
-- Configuration is saved in browser localStorage
+**Important Security Notes**:
+- Environment variables are only for local development convenience
+- They are NOT included in production builds
+- `.env` files are gitignored and never committed
+- In production, users configure their own credentials via the Settings page
+
+**Alternatively**, skip the `.env` file and configure through the in-app Settings page (⚙️ icon):
+- Works the same for local development and production
+- Settings saved in browser localStorage
+- No risk of accidentally committing credentials
 
 4. Run the development server:
 ```bash
@@ -158,6 +179,7 @@ Each slide includes:
 
 ### Build for Production
 ```bash
+cd src/frontend
 npm run build
 ```
 
@@ -170,6 +192,27 @@ npm run lint
 ```bash
 npm run preview
 ```
+
+## Deployment
+
+This project uses GitHub Actions to automatically deploy to Azure Static Web Apps.
+
+### Quick Deploy
+
+1. Create an Azure Static Web App
+2. Add the deployment token to GitHub Secrets as `AZURE_STATIC_WEB_APPS_API_TOKEN`
+3. Push to the `main` branch
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+### Security Model
+
+**No credentials are ever deployed:**
+- The production build contains NO Azure API keys
+- Users provide their own Azure OpenAI credentials
+- Credentials are stored only in the user's browser (localStorage)
+- Each user brings their own Azure subscription
+- Zero credential management on your part
 
 ## Contributing
 
