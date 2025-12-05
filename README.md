@@ -25,8 +25,15 @@ Before the presentation, the coach guides you through a discovery process to und
 ### 🎤 Interactive Presentation Practice
 - **Real-time Coaching**: Get immediate feedback on your responses
 - **Slide-by-Slide Guidance**: Practice with actual presentation materials
-- **OCR Integration**: Automatically extracts slide content using Azure Document Intelligence
+- **OCR Integration**: Automatically extracts slide content using Azure OpenAI Vision
 - **Adaptive Flow**: AI optimally orders slides based on customer context
+
+### ⚙️ Flexible Configuration
+- **In-App Settings Page**: Configure Azure services directly in the browser
+- **Environment Variables**: Support for .env file configuration
+- **Custom Override**: Save custom settings in browser localStorage
+- **Real-time Updates**: Changes take effect immediately
+- **Secure Display**: Mask API keys with option to show/hide
 
 ### 🧠 Intelligent AI Coach
 The coach provides:
@@ -48,19 +55,16 @@ The coach provides:
 - **React 19** with TypeScript
 - **Vite** for fast development
 - **Tailwind CSS** for styling
-- **Azure Document Intelligence** for OCR
 
 ### AI & Azure Services
-- **Azure OpenAI** (GPT-4) for coaching intelligence
-- **Azure Document Intelligence** for slide text extraction
-- Configurable through environment variables
+- **Azure OpenAI** (GPT-4) for coaching intelligence and slide text extraction (Vision API)
+- Configurable through environment variables or in-app settings
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v18+)
-- Azure OpenAI access
-- Azure Document Intelligence access
+- Azure OpenAI access (with Vision-enabled model like GPT-4)
 
 ### Installation
 
@@ -75,13 +79,19 @@ cd migration-coach/src/frontend
 npm install
 ```
 
-3. Configure environment variables:
+3. Configure environment variables (Optional):
 Create a `.env` file in `src/frontend`:
 ```env
 VITE_AZURE_OPENAI_ENDPOINT=https://zzzzzzzzzzzzzzz-resource.cognitiveservices.azure.com
 VITE_AZURE_OPENAI_API_KEY=
 VITE_AZURE_OPENAI_DEPLOYMENT=gpt-5.1
 ```
+
+**Note**: You can also configure Azure settings through the in-app Settings page (⚙️ icon) after launching the application. The Settings page allows you to:
+- Set or override environment variables
+- View current configuration (from .env or custom)
+- Switch between environment defaults and custom settings
+- Configuration is saved in browser localStorage
 
 4. Run the development server:
 ```bash

@@ -1,5 +1,6 @@
 import type { CustomerContext, Slide } from '../types';
 import type { SlideContent } from './slideOCR';
+import { getConfig } from './config';
 
 interface AzureOpenAIConfig {
   endpoint: string;
@@ -8,11 +9,8 @@ interface AzureOpenAIConfig {
 }
 
 const getAzureOpenAIConfig = (): AzureOpenAIConfig => {
-  return {
-    endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT || '',
-    apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY || '',
-    deploymentName: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-4'
-  };
+  const config = getConfig();
+  return config.openai;
 };
 
 export interface PresentationFlow {

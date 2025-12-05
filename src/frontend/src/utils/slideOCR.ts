@@ -1,4 +1,5 @@
 import type { Slide } from '../types';
+import { getConfig } from './config';
 
 export interface SlideContent {
   slideNumber: number;
@@ -22,11 +23,8 @@ interface CachedOCRData {
 }
 
 const getAzureOpenAIConfig = (): AzureOpenAIConfig => {
-  return {
-    endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT || '',
-    apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY || '',
-    deploymentName: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-4'
-  };
+  const config = getConfig();
+  return config.openai;
 };
 
 /**

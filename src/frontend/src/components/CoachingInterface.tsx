@@ -8,9 +8,10 @@ import { generatePresentationFlow, reorderSlides, generateTalkingPoints, type Sl
 interface Props {
   customerContext: CustomerContext;
   onReset?: () => void;
+  onOpenConfig?: () => void;
 }
 
-export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset }) => {
+export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset, onOpenConfig }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -23,6 +24,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
   const [orderedSlides, setOrderedSlides] = useState<Slide[]>(SAMPLE_SLIDES);
   const [flowReasoning, setFlowReasoning] = useState<string>('');
   const [talkingPoints, setTalkingPoints] = useState<SlideTalkingPoints[]>([]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -254,16 +256,70 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
           <div className="text-sm text-gray-600">
             Slide {currentSlideIndex + 1} of {orderedSlides.length}
           </div>
-          {onReset && (
-            <button
-              onClick={onReset}
-              className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
-            >
-              Start Over
-            </button>
-          )}
+          <div className="flex gap-2">
+            {onOpenConfig && (
+              <button
+                onClick={onOpenConfig}
+                className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors flex items-center gap-1"
+                title="Settings"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Settings
+              </button>
+            )}
+            {onReset && (
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+              >
+                Start Over
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">Start Over?</h3>
+                <p className="text-sm text-gray-600">This will reset your current session</p>
+              </div>
+            </div>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to start over? This will clear the current customer context and presentation progress. You'll need to go through customer discovery again.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  onReset?.();
+                }}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Yes, Start Over
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">

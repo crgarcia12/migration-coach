@@ -1,6 +1,7 @@
 import type { CustomerContext, Slide, Message } from '../types';
 import type { SlideContent } from './slideOCR';
 import { formatOCRForPrompt } from './slideOCR';
+import { getConfig } from './config';
 
 interface AzureAIConfig {
   endpoint: string;
@@ -8,13 +9,10 @@ interface AzureAIConfig {
   deploymentName: string;
 }
 
-// Get configuration from environment variables
+// Get configuration from centralized config (localStorage or environment)
 const getAzureAIConfig = (): AzureAIConfig => {
-  return {
-    endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT || '',
-    apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY || '',
-    deploymentName: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-4'
-  };
+  const config = getConfig();
+  return config.openai;
 };
 
 export const generateAICoachResponse = async (
