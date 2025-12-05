@@ -33,9 +33,15 @@ jobs:
         run: |
           cd src/frontend
           npm run build
+          echo "Build completed. Checking dist folder..."
+          ls -la dist/
+          echo "Checking for index.html..."
+          test -f dist/index.html || { echo "ERROR: dist/index.html not found!"; exit 1; }
+          echo "Checking for staticwebapp.config.json..."
+          test -f dist/staticwebapp.config.json || { echo "ERROR: dist/staticwebapp.config.json not found!"; exit 1; }
         env:
           # No Azure credentials in build - users configure in browser
-          NODE_ENV: development
+          NODE_ENV: production
 
       - name: Deploy to Azure Static Web Apps
         id: deploy
