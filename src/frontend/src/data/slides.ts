@@ -34,7 +34,7 @@ const generateSlides = (): Slide[] => {
   ];
   
   // Generate slides 8-43 (36 slides total) with leading zeros for single digits
-  for (let i = 0; i <= 4; i++) {
+  for (let i = 1; i <= 4; i++) {
     const slideNumber = i.toString().padStart(2, '0');
     slides.push({
       id: i,
