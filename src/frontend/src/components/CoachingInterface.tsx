@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { CustomerContext, Message } from '../types';
+import type { CustomerContext, Message, Slide } from '../types';
 import { SAMPLE_SLIDES } from '../data/slides';
 import { generateAICoachResponse } from '../utils/azureAICoach';
-import { extractTextFromAllSlides, formatOCRForPrompt, type SlideContent } from '../utils/slideOCR';
+import { extractTextFromAllSlides, type SlideContent } from '../utils/slideOCR';
+import { generatePresentationFlow, reorderSlides, generateTalkingPoints, type SlideTalkingPoints } from '../utils/presentationFlow';
 
 interface Props {
   customerContext: CustomerContext;
@@ -14,26 +15,60 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'keypoints' | 'objections' | 'redflags'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'keypoints' | 'objections' | 'redflags' | 'flow'>('chat');
   const [slideWidth, setSlideWidth] = useState(50); // percentage
   const [isResizing, setIsResizing] = useState(false);
   const [slideContents, setSlideContents] = useState<SlideContent[]>([]);
   const [isLoadingOCR, setIsLoadingOCR] = useState(true);
+  const [orderedSlides, setOrderedSlides] = useState<Slide[]>(SAMPLE_SLIDES);
+  const [flowReasoning, setFlowReasoning] = useState<string>('');
+  const [talkingPoints, setTalkingPoints] = useState<SlideTalkingPoints[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const currentSlide = SAMPLE_SLIDES[currentSlideIndex];
+  const currentSlide = orderedSlides[currentSlideIndex];
 
-  // Extract OCR content from all slides on mount
+  // Extract OCR content from all slides on mount, then generate presentation flow
   useEffect(() => {
     const loadSlideContent = async () => {
       setIsLoadingOCR(true);
       try {
+        console.log('\n🚀 === MIGRATION COACH INITIALIZATION === 🚀\n');
+        
+        // Step 1: Extract OCR from all slides
+        console.log('📄 STEP 1: Extracting text from slides...');
         const contents = await extractTextFromAllSlides(SAMPLE_SLIDES);
         setSlideContents(contents);
-        console.log('Slide OCR content loaded:', contents);
+        console.log(`✓ Extracted text from ${contents.length} slides\n`);
+
+        // Step 2: Generate optimized presentation flow
+        console.log('🎯 STEP 2: Generating presentation flow...');
+        const flow = await generatePresentationFlow(customerContext, SAMPLE_SLIDES, contents);
+        setFlowReasoning(flow.reasoning);
+        console.log('✓ Presentation flow generated\n');
+        
+        // Step 3: Reorder slides based on flow
+        console.log('🔄 STEP 3: Reordering slides...');
+        const reordered = reorderSlides(SAMPLE_SLIDES, flow);
+        setOrderedSlides(reordered);
+        console.log('✓ Slides reordered\n');
+        
+        // Step 4: Generate talking points for each slide
+        console.log('🎤 STEP 4: Generating talking points...');
+        const points = await generateTalkingPoints(customerContext, reordered, contents);
+        setTalkingPoints(points);
+        console.log('✓ Talking points generated\n');
+        
+        console.log('✅ === INITIALIZATION COMPLETE === ✅\n');
+        console.log('The presentation has been customized for:');
+        console.log(`  → ${customerContext.audienceType} audience`);
+        console.log(`  → ${customerContext.urgency} urgency`);
+        console.log(`  → ${customerContext.modernizationAppetite} modernization appetite`);
+        console.log(`  → Pain points: ${customerContext.painPoints.join(', ')}`);
+        console.log('\nReady to coach! 🎓\n');
+        
       } catch (error) {
-        console.error('Failed to extract slide content:', error);
+        console.error('❌ Failed to initialize:', error);
       } finally {
         setIsLoadingOCR(false);
       }
@@ -48,13 +83,13 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
       const welcomeMessage: Message = {
         id: Date.now().toString(),
         role: 'coach',
-        content: `Alright, let's get you ready for this presentation. I see you're dealing with a ${customerContext.audienceType} audience who's ${customerContext.urgency} about this migration. Let me be clear - I'm not here to coddle you. I'm here to make sure you don't fumble this opportunity.\n\nWe're starting with the ${currentSlide.title} slide. Tell me, what's your opening line going to be?`,
+        content: `Alright, let's get you ready for this presentation. I see you're dealing with a ${customerContext.audienceType} audience who's ${customerContext.urgency} about this migration.\n\nI've analyzed all ${orderedSlides.length} slides and customized the presentation flow specifically for your customer:\n\n"${flowReasoning}"\n\nWe're starting with the ${currentSlide.title} slide. Tell me, what's your opening line going to be?`,
         timestamp: new Date(),
         sentiment: 'challenging'
       };
       setMessages([welcomeMessage]);
     }
-  }, [isLoadingOCR, slideContents]);
+  }, [isLoadingOCR, slideContents, flowReasoning]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -114,9 +149,9 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
         const coachMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'coach',
-          content: coachResponse.content,
+          content: content,
           timestamp: new Date(),
-          sentiment: coachResponse.sentiment
+          sentiment: sentiment
         };
 
         setMessages(prev => [...prev, coachMessage]);
@@ -137,9 +172,9 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
   };
 
   const handleNextSlide = () => {
-    if (currentSlideIndex < SAMPLE_SLIDES.length - 1) {
+    if (currentSlideIndex < orderedSlides.length - 1) {
       setCurrentSlideIndex(currentSlideIndex + 1);
-      const nextSlide = SAMPLE_SLIDES[currentSlideIndex + 1];
+      const nextSlide = orderedSlides[currentSlideIndex + 1];
       
       const transitionMessage: Message = {
         id: Date.now().toString(),
@@ -161,7 +196,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
       const backMessage: Message = {
         id: Date.now().toString(),
         role: 'coach',
-        content: `We're going back to review ${SAMPLE_SLIDES[currentSlideIndex - 1].title}. Let's make sure you've got this one locked down.`,
+        content: `We're going back to review ${orderedSlides[currentSlideIndex - 1].title}. Let's make sure you've got this one locked down.`,
         timestamp: new Date(),
         sentiment: 'neutral'
       };
@@ -172,7 +207,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
 
   const jumpToSlide = (index: number) => {
     setCurrentSlideIndex(index);
-    const targetSlide = SAMPLE_SLIDES[index];
+    const targetSlide = orderedSlides[index];
     
     const jumpMessage: Message = {
       id: Date.now().toString(),
@@ -210,7 +245,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
         </div>
         <div className="flex items-center gap-4">
           <div className="text-sm text-gray-600">
-            Slide {currentSlideIndex + 1} of {SAMPLE_SLIDES.length}
+            Slide {currentSlideIndex + 1} of {orderedSlides.length}
           </div>
           {onReset && (
             <button
@@ -251,11 +286,11 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
                 ← Previous
               </button>
               <span className="text-white text-sm">
-                {currentSlideIndex + 1} / {SAMPLE_SLIDES.length}
+                {currentSlideIndex + 1} / {orderedSlides.length}
               </span>
               <button
                 onClick={handleNextSlide}
-                disabled={currentSlideIndex === SAMPLE_SLIDES.length - 1}
+                disabled={currentSlideIndex === orderedSlides.length - 1}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next →
@@ -264,7 +299,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
 
             {/* Slide Thumbnails */}
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {SAMPLE_SLIDES.map((slide, index) => (
+              {orderedSlides.map((slide, index) => (
                 <button
                   key={slide.id}
                   onClick={() => jumpToSlide(index)}
@@ -305,6 +340,7 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
             <div className="flex">
               {[
                 { id: 'chat' as const, label: 'Coach Chat', icon: '💬' },
+                { id: 'flow' as const, label: 'Presentation Flow', icon: '📊' },
                 { id: 'keypoints' as const, label: 'Key Points', icon: '🎯' },
                 { id: 'objections' as const, label: 'Objections', icon: '⚠️' },
                 { id: 'redflags' as const, label: 'Red Flags', icon: '🚫' }
@@ -327,6 +363,77 @@ export const CoachingInterface: React.FC<Props> = ({ customerContext, onReset })
 
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-6">
+            {activeTab === 'flow' && (
+              <div className="space-y-4">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Customized Presentation Flow</h3>
+                  <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                    <p className="text-sm text-gray-700"><strong>Strategy:</strong> {flowReasoning}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {orderedSlides.map((slide, index) => {
+                    const points = talkingPoints.find(tp => tp.slideId === slide.id);
+                    const isCurrent = index === currentSlideIndex;
+                    
+                    return (
+                      <div 
+                        key={slide.id}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          isCurrent 
+                            ? 'border-blue-500 bg-blue-50 shadow-md' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                            isCurrent ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className={`font-semibold ${isCurrent ? 'text-blue-900' : 'text-gray-800'}`}>
+                                {slide.title}
+                              </h4>
+                              {isCurrent && (
+                                <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            
+                            {points ? (
+                              <div className="space-y-2 mt-3">
+                                <div className="pl-3 border-l-2 border-green-500">
+                                  <p className="text-sm font-bold text-gray-900">{points.keyMessage1}</p>
+                                </div>
+                                <div className="pl-3 border-l-2 border-blue-400">
+                                  <p className="text-sm font-bold text-gray-900">{points.keyMessage2}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500 italic mt-2">Generating talking points...</p>
+                            )}
+                            
+                            {!isCurrent && (
+                              <button
+                                onClick={() => jumpToSlide(index)}
+                                className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Jump to this slide →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {activeTab === 'chat' && (
               <div className="space-y-4">
                 {messages.map((message) => (
